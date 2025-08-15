@@ -1,5 +1,5 @@
 import type { Variogram } from "../kriging";
-import { assert, calcDataTexSize, ColorMappingObject, colorToRGBA, getTextureUnpackAlign, isWorker, LEFT_SHIFT_16, LEFT_SHIFT_8, MAX_STOPS, SupportOffscreenCanvas, VariogramObject, type ColorMappingItem, type GL } from "../supports";
+import { assert, calcDataTexSize, ColorMappingObject, colorToRGBA, getTextureUnpackAlign, isWorker, MAX_STOPS, SupportOffscreenCanvas, VariogramObject, type ColorMappingItem, type GL } from "../supports";
 
 
 function initGlCtx() {
@@ -52,6 +52,7 @@ function createShader(gl: GL, type: number, source: string) {
     gl.deleteShader(shader);
     throw new Error(errinfo);
 }
+
 export function createProgram(
     gl: GL,
     [vertexShaderSource, fragmentShaderSource]: string[]
@@ -89,8 +90,9 @@ export function createColorMappingObject(stops: ColorMappingItem[]) {
         const cursor = i * 4;
         data[cursor] = min;
         data[cursor + 1] = max;
-        data[cursor + 2] = r * LEFT_SHIFT_16 + g * LEFT_SHIFT_8 + b;
-        data[cursor + 3] = a;
+        //in fragment if highp not support(example in mobile), use mediump:  2^14 = 16384, precesion = 2^-10
+        data[cursor + 2] = r + g / 1000;
+        data[cursor + 3] = b + a / 1000;
     }
 
     if (!isWEBGL2) {

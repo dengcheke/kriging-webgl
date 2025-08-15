@@ -1,6 +1,6 @@
 import { LRUCache } from "lru-cache";
 import type { Variogram } from "../kriging";
-import { assert, ColorMappingObject, ModelCode, OutputType, SupportOffscreenCanvas, VariogramObject, type ColorMappingItem } from "../supports";
+import { assert, ColorMappingObject, ModelCode, OutputType, SupportOffscreenCanvas, VariogramObject, withResolvers, type ColorMappingItem } from "../supports";
 import { glsl_fs_main } from "./glsl";
 import { createColorMappingObject, createProgram, createVariogramObject, getGLCtx } from "./utils";
 
@@ -32,9 +32,19 @@ function initGenerateCtx() {
            #define gl_FragColor out_color
         
            precision highp float;
+           precision highp sampler2D;
+           
            out vec4 out_color;
         `
-        : 'precision highp float;';
+        : `
+            #ifdef GL_FRAGMENT_PRECISION_HIGH
+                precision highp float;
+                precision highp sampler2D;
+            #else
+                precision mediump float;
+                precision mediump sampler2D;
+            #endif
+        `;
     const vs = prefixVs + `
         attribute vec2 position;
         void main(){  
@@ -227,7 +237,7 @@ function wrapQueue<
     const queue = [] as Task[];
     let curTask: Task;
     return (...args: Parameters<F>) => {
-        const { promise, resolve, reject } = Promise.withResolvers<R>();
+        const { promise, resolve, reject } = withResolvers<R>();
         const task = { resolve, reject, args };
         queue.unshift(task);
         Promise.resolve().then(excute);

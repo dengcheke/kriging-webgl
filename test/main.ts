@@ -1,6 +1,6 @@
 import { debounce } from 'es-toolkit';
 import { createBufferFromTypedArray, createProgram } from "twgl.js";
-import { colorToRGBA } from '../src/supports';
+import { colorToRGBA, withResolvers } from '../src/supports';
 import { glsl_pack } from '../src/webgl/glsl';
 import { getRainData } from './data';
 import './style.scss';
@@ -25,7 +25,7 @@ const workerGerenate = (() => {
         taskMap.delete(id);
     };
     const gerenate = (opts: any) => {
-        const { promise, resolve, reject } = Promise.withResolvers();
+        const { promise, resolve, reject } = withResolvers();
         const id = taskId++;
         worker.postMessage({ data: opts, id });
         taskMap.set(id, { resolve, reject });

@@ -17,8 +17,7 @@ export const OutputType = {
     'imagebitmap': 3
 } as const;
 export const MAX_STOPS = 256;
-export const LEFT_SHIFT_8 = 2 ** 8;
-export const LEFT_SHIFT_16 = 2 ** 16;
+
 
 export class VariogramObject {
     _model: KrigingModel;
@@ -57,7 +56,15 @@ export const colorToRGBA = (() => {
     }
 })();
 
-
+export function withResolvers<T>() {
+    let resolve: (t: T) => void;
+    let reject: (e?: any) => void;
+    const promise = new Promise<T>((res, rej) => {
+        resolve = res;
+        reject = rej;
+    });
+    return { promise, resolve, reject }
+}
 export function getTextureUnpackAlign(rowBytes: number) {
     return !(rowBytes & 0b111) ? 8 : !(rowBytes & 0b11) ? 4 : !(rowBytes & 0b1) ? 2 : 1;
 }
