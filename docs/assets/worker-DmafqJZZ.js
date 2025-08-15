@@ -1685,8 +1685,6 @@
     "imagebitmap": 3
   };
   const MAX_STOPS = 256;
-  const LEFT_SHIFT_8 = 2 ** 8;
-  const LEFT_SHIFT_16 = 2 ** 16;
   class VariogramObject {
     _model;
     _n;
@@ -1724,6 +1722,15 @@
       return map[colorStr];
     };
   })();
+  function withResolvers() {
+    let resolve;
+    let reject;
+    const promise = new Promise((res, rej) => {
+      resolve = res;
+      reject = rej;
+    });
+    return { promise, resolve, reject };
+  }
   function getTextureUnpackAlign(rowBytes) {
     return !(rowBytes & 7) ? 8 : !(rowBytes & 3) ? 4 : !(rowBytes & 1) ? 2 : 1;
   }
@@ -1751,18 +1758,18 @@
     if (!condition) throw new Error(msg);
   }
   const glsl_pack = `
-vec4 packNormalizeFloatToRGBA( in highp float v ) {
+vec4 packNormalizeFloatToRGBA( in float v ) {
     vec4 enc = vec4(v, fract(vec3(255.0, 65025.0, 16581375.0) * v));
     enc.xyz -= enc.yzw / 255.0; 
     return enc;
 }
-float unpackRGBAToNormalizeFloat( const in highp vec4 v ) {
+float unpackRGBAToNormalizeFloat( const in vec4 v ) {
     return dot(v, vec4(1, 1.0 / 255.0, 1.0 / 65025.0, 1.0 / 16581375.0));
 }
-vec3 packNormalizeFloatToRGB( in highp float v ) {
+vec3 packNormalizeFloatToRGB( in float v ) {
 	return packNormalizeFloatToRGBA( v ).xyz;
 }
-float unpackRGBToNormalizeFloat( const in highp vec3 v ) {
+float unpackRGBToNormalizeFloat( const in vec3 v ) {
 	return unpackRGBAToNormalizeFloat( vec4( v, 0 ) );
 }
 `;
@@ -1804,20 +1811,20 @@ struct Node {
     vec4 color;
 };
 Node decode_classbreak(vec4 data){
-    float packColor = data.b;
-    float a = data.a / 255.0;
+    float pack_rg = data.b;
+    float pack_ba = data.a;
+
     vec4 color = vec4(
-        mod(
-            floor(vec3(packColor) / vec3(65536, 256, 1)),
-            vec3(256.0)
-        ) / 255.0, 
-        a
-    );
+        floor(pack_rg),
+        clamp(fract(pack_rg) * 1000.0, 0.0, 255.0),
+        floor(pack_ba),
+        clamp(fract(pack_ba) * 1000.0, 0.0, 255.0)
+    ) / 255.0;
     return Node(data.r, data.g, color);
 }
 
 vec4 mappingColor(
-    highp sampler2D map, 
+    sampler2D map, 
     int stopCount,
     float value 
 ){
@@ -1881,8 +1888,8 @@ vec4 mappingColor(
     #endif
 
 
-    uniform highp sampler2D u_variogramMxyTexture; 
-    uniform highp sampler2D u_colormappingTexture; 
+    uniform sampler2D u_variogramMxyTexture; 
+    uniform sampler2D u_colormappingTexture; 
     ${glsl_pack}
     ${glsl_kriging}
     ${glsl_colorMapping}
@@ -2004,8 +2011,8 @@ vec4 mappingColor(
       const cursor = i * 4;
       data[cursor] = min;
       data[cursor + 1] = max;
-      data[cursor + 2] = r * LEFT_SHIFT_16 + g * LEFT_SHIFT_8 + b;
-      data[cursor + 3] = a;
+      data[cursor + 2] = r + g / 1e3;
+      data[cursor + 3] = b + a / 1e3;
     }
     if (!isWEBGL2) {
       assert(getExtension("OES_texture_float"), "webgl float texture unsupport");
@@ -2099,8 +2106,18 @@ vec4 mappingColor(
            #define gl_FragColor out_color
         
            precision highp float;
+           precision highp sampler2D;
+           
            out vec4 out_color;
-        ` : "precision highp float;";
+        ` : `
+            #ifdef GL_FRAGMENT_PRECISION_HIGH
+                precision highp float;
+                precision highp sampler2D;
+            #else
+                precision mediump float;
+                precision mediump sampler2D;
+            #endif
+        `;
     const vs = prefixVs + `
         attribute vec2 position;
         void main(){  
@@ -2250,7 +2267,7 @@ vec4 mappingColor(
     const queue = [];
     let curTask;
     return (...args) => {
-      const { promise, resolve, reject } = Promise.withResolvers();
+      const { promise, resolve, reject } = withResolvers();
       const task = { resolve, reject, args };
       queue.unshift(task);
       Promise.resolve().then(excute);
@@ -2431,4 +2448,4 @@ vec4 mappingColor(
     return result;
   }
 })();
-//# sourceMappingURL=worker-iygL5u_Q.js.map
+//# sourceMappingURL=worker-DmafqJZZ.js.map

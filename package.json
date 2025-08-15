@@ -1,6 +1,6 @@
 {
     "name": "kriging-webgl",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "kriging.js webgl accelerate version",
     "keywords": ["kriging", "webgl"],
     "type": "module",

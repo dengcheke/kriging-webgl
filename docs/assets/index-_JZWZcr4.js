@@ -365,19 +365,28 @@ const colorToRGBA = /* @__PURE__ */ (() => {
     return map[colorStr];
   };
 })();
+function withResolvers() {
+  let resolve;
+  let reject;
+  const promise = new Promise((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+}
 const glsl_pack = `
-vec4 packNormalizeFloatToRGBA( in highp float v ) {
+vec4 packNormalizeFloatToRGBA( in float v ) {
     vec4 enc = vec4(v, fract(vec3(255.0, 65025.0, 16581375.0) * v));
     enc.xyz -= enc.yzw / 255.0; 
     return enc;
 }
-float unpackRGBAToNormalizeFloat( const in highp vec4 v ) {
+float unpackRGBAToNormalizeFloat( const in vec4 v ) {
     return dot(v, vec4(1, 1.0 / 255.0, 1.0 / 65025.0, 1.0 / 16581375.0));
 }
-vec3 packNormalizeFloatToRGB( in highp float v ) {
+vec3 packNormalizeFloatToRGB( in float v ) {
 	return packNormalizeFloatToRGBA( v ).xyz;
 }
-float unpackRGBToNormalizeFloat( const in highp vec3 v ) {
+float unpackRGBToNormalizeFloat( const in vec3 v ) {
 	return unpackRGBAToNormalizeFloat( vec4( v, 0 ) );
 }
 `;
@@ -418,7 +427,7 @@ function calcExtent(points2) {
 }
 function WorkerWrapper(options) {
   return new Worker(
-    "" + new URL("worker-iygL5u_Q.js", import.meta.url).href,
+    "" + new URL("worker-DmafqJZZ.js", import.meta.url).href,
     {
       name: options?.name
     }
@@ -439,7 +448,7 @@ const workerGerenate = (() => {
     taskMap.delete(id);
   };
   const gerenate = (opts) => {
-    const { promise, resolve, reject } = Promise.withResolvers();
+    const { promise, resolve, reject } = withResolvers();
     const id = taskId++;
     worker.postMessage({ data: opts, id });
     taskMap.set(id, { resolve, reject });
@@ -770,4 +779,4 @@ function expandFactor(extent2, factor) {
     ymax: cy + hh
   };
 }
-//# sourceMappingURL=index-z2K4iz3M.js.map
+//# sourceMappingURL=index-_JZWZcr4.js.map

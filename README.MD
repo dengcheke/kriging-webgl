@@ -195,8 +195,9 @@ gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, packedImageB
 ```
 
 ### Optimize 
+
+#### 对象复用 VariogramObject & ColorMappingObject
 ```typescript
-// 可复用对象: VariogramObject & ColorMappingObject
 import {gernerate_WEBGL， createColorMappingObject， createVariogramObject} from 'kriging-webgl';
 
 
@@ -206,7 +207,6 @@ const result = await gernerate_WEBGL({
     variogram: variogram,
     colorMapping: colorMapping
 });
-
 
 
 // 给多个时刻不同数据使用相同的colorMapping
@@ -249,9 +249,32 @@ variogram_object.dispoe(); //不使用后, 需要手动释放
 
 ```
 
+#### 精度问题
+某些低端设备不支持highp float; 坐标(例如web墨卡托)误差很大, 导致结果误差大; 可将坐标归一化，合理利用浮点数存储精度
+```typescript
+const xs = [113.13, 113.23, ....];
+const ys = [23.33, 23.44, ...];
+
+const [xmin, xmax, ymin, ymax] = resolveRange(xs, ys); 
+const width = xmax - xmin;
+const height = ymax - min;
+const normalized_xs = xs.map(x => (x-xmin) / width);
+const normalized_ys = ys.map(y => (y-ymin) / height);
+const variogram = train(data, normalized_xs, normalized_ys, 'exponential', 0, 10);
+
+const cellSize = width / 300;
+const gridSize = [300, Math.round(height / cellSize)];
+const imagebitmap = await gernerate_WEBGL({
+    variogram,
+    llCorner: [0, 0], //position normalized
+    cellSize,
+    gridSize,
+});
+```
+
+
 
 ### use in worker
-
 ```typescript
 // main thread
 const worker = new Worker('worker.js');
