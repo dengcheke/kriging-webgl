@@ -7,7 +7,7 @@ export default defineConfig({
         emptyOutDir: true,
         lib: {
             entry: './src/index.ts',
-            fileName: 'index',
+            fileName: format => `index.${format}.js`,
             formats: ['es', 'cjs'],
             name: "KrigingWebGL"
         },
