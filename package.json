@@ -1,8 +1,11 @@
 {
     "name": "kriging-webgl",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "kriging.js webgl accelerate version",
-    "keywords": ["kriging", "webgl"],
+    "keywords": [
+        "kriging",
+        "webgl"
+    ],
     "type": "module",
     "main": "./dist/index.cjs.js",
     "module": "./dist/index.es.js",
@@ -14,7 +17,9 @@
             "require": "./dist/index.cjs.js"
         }
     },
-    "files": ["dist"],
+    "files": [
+        "dist"
+    ],
     "repository": {
         "type": "git",
         "url": "https://github.com/dengcheke/kriging-webgl.git"
